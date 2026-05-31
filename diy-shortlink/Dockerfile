@@ -13,7 +13,6 @@ RUN apk add --no-cache ca-certificates tzdata sqlite
 RUN mkdir /data
 COPY --from=builder /shortlink /shortlink
 COPY templates /templates
-COPY static /static
 EXPOSE 8090
 VOLUME /data
 CMD ["/shortlink"]
