@@ -1,0 +1,19 @@
+services:
+  shortlink:
+    build: .
+    container_name: diy-shortlink
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    environment:
+      DOMAIN: "10.10.33.52:8090"
+      ADMIN_USER: "admin"
+      ADMIN_PASSWORD: "admin123"
+      SESSION_KEY: "shortlink-session-key-2026"
+      DB_PATH: "/data/links.db"
+      PORT: "8090"
+    volumes:
+      - shortlink_data:/data
+
+volumes:
+  shortlink_data:

@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  linkstack:
+    hostname: 'linkstack'
+    container_name: linkstack
+    image: 'linkstackorg/linkstack:latest'
+    restart: unless-stopped
+    environment:
+      TZ: 'Asia/Jakarta'
+      SERVER_ADMIN: 'admin@dmnet.id'
+      HTTP_SERVER_NAME: 'localhost'
+      HTTPS_SERVER_NAME: 'localhost'
+      LOG_LEVEL: 'info'
+      PHP_MEMORY_LIMIT: '256M'
+      UPLOAD_MAX_FILESIZE: '16M'
+    volumes:
+      - 'linkstack_data:/htdocs'
+    ports:
+      - '8082:80'
+      - '8443:443'
+    networks:
+      - linkstack_net
+
+volumes:
+  linkstack_data:
+
+networks:
+  linkstack_net:
+    driver: bridge

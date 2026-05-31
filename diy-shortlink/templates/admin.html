@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Shortlink Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script>tailwind.config={darkMode:'class',theme:{extend:{colors:{dark:{900:'#0f172a',800:'#1e293b',700:'#334155',600:'#475569'}}}}}</script>
+  <style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{background:#0f172a;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;margin:0}
+  .sidebar{background:#1e293b;border-right:1px solid #334155;position:fixed;inset:0;z-index:40;transform:translateX(-100%);transition:transform .25s ease}
+  .sidebar.open{transform:translateX(0)}
+  @media(min-width:768px){.sidebar{position:static;transform:none;width:220px}}
+  .card{background:#1e293b;border:1px solid #334155}
+  input,textarea,select{background:#0f172a!important;color:#e2e8f0!important;border:1px solid #475569!important;outline:none!important;border-radius:0.5rem;font-size:16px!important}
+  input:focus,textarea:focus,select:focus{border-color:#3b82f6!important;box-shadow:0 0 0 2px rgba(59,130,246,0.3)!important}
+  .btn-p{background:#2563eb;color:#fff;padding:0.5rem 1rem;border-radius:0.5rem;font-size:0.875rem;font-weight:500;border:none;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .btn-p:hover{background:#1d4ed8}
+  .btn-d{background:#dc2626;color:#fff;padding:0.5rem 1rem;border-radius:0.5rem;font-size:0.875rem;border:none;cursor:pointer}
+  .btn-d:hover{background:#b91c1c}
+  .btn-g{color:#94a3b8;padding:0.4rem 0.65rem;border-radius:0.5rem;font-size:0.75rem;cursor:pointer;border:1px solid #475569;background:transparent;white-space:nowrap}
+  .btn-g:hover{background:#334155;color:#e2e8f0}
+  .nav-item{display:flex;align-items:center;gap:.75rem;padding:.65rem 1rem;border-radius:.5rem;cursor:pointer;transition:all .15s;color:#94a3b8;font-size:.875rem}
+  .nav-item:hover{background:#334155;color:#e2e8f0}
+  .nav-item.active{background:#2563eb20;color:#60a5fa;border:1px solid #2563eb40}
+  .stat{border:1px solid #334155;border-radius:.75rem;padding:1rem}
+  .badge{font-size:.65rem;padding:.12rem .45rem;border-radius:999px;white-space:nowrap}
+  .mo{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:1rem}
+  .mc{background:#1e293b;border:1px solid #334155;border-radius:1rem;padding:1.25rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+  .toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:.75rem 1.25rem;border-radius:.75rem;z-index:100;animation:slideUp .3s ease;max-width:90vw}
+  @keyframes slideUp{from{opacity:0;transform:translateY(1rem)}to{opacity:1;transform:translateY(0)}}
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-thumb{background:#475569;border-radius:2px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .th-card{border-radius:.75rem;padding:.75rem .5rem;cursor:pointer;transition:all .15s;text-align:center;font-size:.65rem;font-weight:600}
+  .th-card:hover{transform:translateY(-2px);box-shadow:0 4px 15px rgba(0,0,0,.3)}
+  .th-card.active{border:2px solid #3b82f6}
+  .soc-btn{display:inline-flex;align-items:center;gap:.25rem;padding:.3rem .55rem;border-radius:999px;font-size:.7rem;border:1px solid #475569;cursor:pointer;transition:all .15s;background:transparent;color:#94a3b8}
+  .soc-btn:hover{background:#334155;color:#e2e8f0}
+  .soc-btn.active{background:#2563eb30;border-color:#3b82f6;color:#60a5fa}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;display:none}
+  .overlay.show{display:block}
+  @media(min-width:768px){.overlay.show{display:none}}
+  .ham{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:.5rem;cursor:pointer;background:#1e293b;border:1px solid #334155}
+  @media(min-width:768px){.ham{display:none}}
+  </style>
+</head>
+<body>
+<!-- Overlay -->
+<div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+<div class="flex min-h-screen">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="flex items-center gap-2 px-4 py-4 mb-3">
+      <span class="text-xl">🔗</span>
+      <span class="font-bold text-white">Shortlink</span>
+      <span class="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded ml-auto">PRO</span>
+    </div>
+    <nav class="flex-1 space-y-1 px-2">
+      <div class="nav-item active" onclick="switchPage('dashboard')" id="nav-dashboard">📊 Dashboard</div>
+      <div class="nav-item" onclick="switchPage('links')" id="nav-links">🔗 Links</div>
+      <div class="nav-item" onclick="switchPage('microsites')" id="nav-microsites">📋 Microsites</div>
+      <div class="nav-item" onclick="switchPage('apikeys')" id="nav-apikeys">🔑 API Keys</div>
+      <div class="nav-item" onclick="switchPage('users')" id="nav-users">👥 Users</div>
+
+    </nav>
+    <div class="border-t border-slate-700 pt-3 mt-2 px-2">
+      <a href="/logout" class="nav-item text-red-400 hover:text-red-300">🚪 Logout</a>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="flex-1 min-w-0 p-3 md:p-6">
+    <!-- Mobile Header -->
+    <div class="flex items-center gap-3 mb-4 md:hidden">
+      <div class="ham" onclick="toggleSidebar()">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="#e2e8f0" stroke-width="2"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+      </div>
+      <span class="font-bold text-white text-lg">🔗 Shortlink</span>
+    </div>
+
+    <!-- ========== DASHBOARD ========== -->
+    <div id="page-dashboard">
+      <h1 class="text-xl md:text-2xl font-bold text-white mb-4">📊 Dashboard</h1>
+      <div id="dash-stats" class="grid grid-cols-2 gap-3 mb-6">
+        <div class="stat"><div class="text-xs text-gray-400 mb-0.5">Links</div><div class="text-xl md:text-2xl font-bold text-white" id="stat-links">-</div></div>
+        <div class="stat"><div class="text-xs text-gray-400 mb-0.5">Clicks</div><div class="text-xl md:text-2xl font-bold text-white" id="stat-clicks">-</div></div>
+        <div class="stat"><div class="text-xs text-gray-400 mb-0.5">Today</div><div class="text-xl md:text-2xl font-bold text-white" id="stat-today">-</div></div>
+        <div class="stat"><div class="text-xs text-gray-400 mb-0.5">Sites</div><div class="text-xl md:text-2xl font-bold text-white" id="stat-microsites">-</div></div>
+      </div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 card rounded-xl p-4">
+          <h3 class="text-sm font-semibold text-white mb-3">📈 Clicks (14 days)</h3>
+          <canvas id="clickChart" height="160"></canvas>
+        </div>
+        <div class="card rounded-xl p-4">
+          <h3 class="text-sm font-semibold text-white mb-3">🏆 Top Links</h3>
+          <div id="top-links" class="space-y-2 text-sm"><div class="text-gray-500 text-center py-4">Loading...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== LINKS ========== -->
+    <div id="page-links" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-xl md:text-2xl font-bold text-white">🔗 Links</h1>
+        <button onclick="showLinkModal()" class="btn-p text-xs md:text-sm">+ New</button>
+      </div>
+      <div class="flex gap-2 mb-4 flex-wrap">
+        <input id="ls" type="text" placeholder="Search..." class="flex-1 min-w-[120px] px-3 py-2 rounded-lg text-sm" oninput="debounce(loadLinks,300)()">
+        <select id="lf" class="px-3 py-2 rounded-lg text-sm" onchange="loadLinks()">
+          <option value="">All</option><option value="active">Active</option><option value="inactive">Inactive</option>
+        </select>
+        <a href="/api/links/export?format=csv" class="btn-g text-xs">📥 CSV</a>
+      </div>
+      <div class="card rounded-xl overflow-hidden">
+        <div class="table-wrap">
+          <table class="w-full text-sm min-w-[500px]">
+            <thead><tr class="border-b border-slate-700 text-left text-gray-400 text-xs uppercase">
+              <th class="px-3 py-2.5 font-medium">Short URL</th><th class="px-3 py-2.5 font-medium">Dest</th>
+              <th class="px-3 py-2.5 font-medium text-center">👁️</th><th class="px-3 py-2.5 font-medium">Status</th><th class="px-3 py-2.5 font-medium"></th>
+            </tr></thead>
+            <tbody id="ltb" class="divide-y divide-slate-700"><tr><td colspan="5" class="px-3 py-8 text-center text-gray-500">Loading...</td></tr></tbody>
+          </table>
+        </div>
+        <div id="lp" class="px-3 py-2.5 border-t border-slate-700 flex items-center justify-between text-xs text-gray-400"></div>
+      </div>
+    </div>
+
+    <!-- ========== MICROSITES ========== -->
+    <div id="page-microsites" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-xl md:text-2xl font-bold text-white">📋 Microsites</h1>
+        <button onclick="showMicrositeModal()" class="btn-p text-xs md:text-sm">+ New</button>
+      </div>
+      <div id="msg" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+    </div>
+
+    <!-- ========== API KEYS ========== -->
+    <div id="page-apikeys" class="hidden">
+      <h1 class="text-xl md:text-2xl font-bold text-white mb-4">🔑 API Keys</h1>
+      <div class="max-w-xl">
+        <p class="text-sm text-gray-400 mb-3">Gunakan <code class="text-blue-400">X-API-Key</code> header untuk akses programmatic.</p>
+        <div class="card rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-white">Admin API Key</h3>
+            <button onclick="copy('{{.APIKey}}')" class="btn-g text-xs">Copy</button>
+          </div>
+          <code class="block bg-slate-800 rounded-lg p-2.5 text-xs sm:text-sm font-mono text-blue-400 break-all">{{.APIKey}}</code>
+          <p class="text-xs text-gray-500 mt-2">Sama dengan password admin. Jangan dishare!</p>
+        </div>
+        <div class="mt-3 card rounded-xl p-4">
+          <h3 class="text-sm font-semibold text-white mb-2">Contoh curl</h3>
+          <pre class="text-xs text-gray-400 bg-slate-800 rounded-lg p-2.5 overflow-x-auto whitespace-pre-wrap break-all">curl -X POST /api/links \
+  -H "X-API-Key: ***" \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== USERS ========== -->
+    <div id="page-users" class="hidden">
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-xl md:text-2xl font-bold text-white">👥 Users</h1>
+        <button onclick="showUserModal()" class="btn-p text-xs md:text-sm">+ Add User</button>
+      </div>
+
+      <!-- Change My Password -->
+      <div class="card rounded-xl p-4 mb-4 max-w-xl">
+        <h3 class="text-sm font-semibold text-white mb-3">🔑 Ganti Password Saya</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <input id="my-oldpw" type="password" placeholder="Password lama" class="px-3 py-2 rounded-lg text-sm">
+          <input id="my-newpw" type="password" placeholder="Password baru" class="px-3 py-2 rounded-lg text-sm">
+          <button onclick="changeMyPassword()" class="btn-p text-sm">Update</button>
+        </div>
+      </div>
+
+      <div id="users-list" class="card rounded-xl overflow-hidden">
+        <div class="divide-y divide-slate-700">
+          <div id="users-rows" class="divide-y divide-slate-700">
+            <div class="p-6 text-center text-gray-500 text-sm">Loading...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="mo hidden" onclick="if(event.target===this)closeModal()"><div class="mc" id="mb"></div></div>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+let chart=null,linkPage=1
+
+// ===== UTILS =====
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('overlay').classList.toggle('show')}
+function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
+function toast(m,t='success'){const e=document.getElementById('toast');e.className=`toast ${t==='success'?'bg-emerald-600':'bg-red-600'} text-white`;e.textContent=m;e.classList.remove('hidden');setTimeout(()=>e.classList.add('hidden'),3000)}
+function copy(t){navigator.clipboard.writeText(t);toast('📋 Copied!')}
+function closeModal(){document.getElementById('modal').classList.add('hidden')}
+function showModal(h){document.getElementById('mb').innerHTML=h;document.getElementById('modal').classList.remove('hidden')}
+
+// ===== SLUG CHECK =====
+let _slugTimers={}
+function previewSlug(val,elId){document.getElementById(elId).textContent=val||'(kosong)'}
+function debounceCheckSlug(val,elId){
+  clearTimeout(_slugTimers[elId])
+  if(!val||val.length<2){document.getElementById(elId).textContent='';return}
+  _slugTimers[elId]=setTimeout(()=>checkSlug(val,elId),400)
+}
+function checkSlug(val,elId){
+  const el=document.getElementById(elId)
+  if(!el)return
+  fetch('/api/check-slug/'+val).then(r=>r.json()).then(d=>{
+    el.textContent=d.available?'✅ Available':'❌ Taken'
+    el.className='text-xs '+(d.available?'text-emerald-400':'text-red-400')
+  }).catch(()=>{el.textContent=''})
+}
+
+async function api(path,opts={}){
+  try{
+    const res=await fetch(path,{...opts,headers:{'Content-Type':'application/json',...opts.headers}})
+    if(opts.method==='DELETE'||res.status===204)return null
+    const d=await res.json()
+    if(!res.ok)throw new Error(d.error||'Request failed')
+    return d
+  }catch(e){toast(e.message,'error');throw e}
+}
+
+// ===== PAGES =====
+function switchPage(p){
+  document.querySelectorAll('[id^="page-"]').forEach(e=>e.classList.add('hidden'))
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'))
+  document.getElementById('page-'+p).classList.remove('hidden')
+  document.getElementById('nav-'+p).classList.add('active')
+  closeModal();toggleSidebarClosed()
+  if(p==='dashboard')loadDashboard()
+  else if(p==='links')loadLinks()
+  else if(p==='microsites')loadMicrosites()
+  else if(p==='users')loadUsers()
+}
+function toggleSidebarClosed(){const s=document.getElementById('sidebar');if(s.classList.contains('open')){s.classList.remove('open');document.getElementById('overlay').classList.remove('show')}}
+
+// ===== DASHBOARD =====
+async function loadDashboard(){
+  const d=await api('/api/dashboard');if(!d)return
+  document.getElementById('stat-links').textContent=d.total_links
+  document.getElementById('stat-clicks').textContent=d.total_clicks.toLocaleString()
+  document.getElementById('stat-today').textContent=d.today_clicks.toLocaleString()
+  document.getElementById('stat-microsites').textContent=d.microsites
+  const te=document.getElementById('top-links')
+  if(!d.top_links.length)te.innerHTML='<div class="text-gray-500 text-center py-4">No clicks</div>'
+  else te.innerHTML=d.top_links.map((l,i)=>`
+    <div class="flex items-center justify-between gap-2">
+      <div class="min-w-0 flex-1"><div class="text-white truncate text-sm">${i+1}. ${l.title||l.code}</div>
+      <a href="//${l.short_url}" target="_blank" class="text-blue-400 text-xs">${l.short_url}</a></div>
+      <span class="font-semibold text-white flex-shrink-0">${l.clicks}</span>
+    </div>`).join('')
+  if(chart)chart.destroy()
+  const ctx=document.getElementById('clickChart').getContext('2d')
+  chart=new Chart(ctx,{
+    type:'line',
+    data:{labels:d.daily_clicks.map(c=>c.day.slice(5)),datasets:[{label:'Clicks',data:d.daily_clicks.map(c=>c.count),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,0.1)',fill:true,tension:.3,pointRadius:2,pointBackgroundColor:'#3b82f6'}]},
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8',font:{size:10}},grid:{color:'#334155'}},y:{ticks:{color:'#94a3b8',font:{size:10},stepSize:1},grid:{color:'#334155'},beginAtZero:true}}}
+  })
+}
+
+// ===== LINKS =====
+async function loadLinks(){
+  const s=document.getElementById('ls').value
+  let url=`/api/links?page=${linkPage}`
+  if(s)url+=`&search=${encodeURIComponent(s)}`
+  const d=await api(url);if(!d)return
+  const tb=document.getElementById('ltb')
+  if(!d.links||!d.links.length){tb.innerHTML='<tr><td colspan="5" class="px-3 py-8 text-center text-gray-500">No links</td></tr>';document.getElementById('lp').innerHTML='';return}
+  tb.innerHTML=d.links.map(l=>{
+    const full=location.protocol+'//'+l.short_url
+    return `<tr class="hover:bg-slate-700/30 transition">
+      <td class="px-3 py-2.5">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <a href="${full}" target="_blank" class="text-blue-400 font-mono text-xs hover:underline">${l.short_url}</a>
+          <button onclick="copy('${full}')" class="text-gray-500 hover:text-gray-300 text-[10px] px-1 py-0.5 rounded border border-slate-600">copy</button>
+          ${l.has_password?'<span class="text-yellow-400 text-[10px]">🔒</span>':''}
+        </div>
+        ${l.title?`<div class="text-xs text-gray-400 mt-0.5 truncate max-w-[200px]">${l.title}</div>`:''}
+      </td>
+      <td class="px-3 py-2.5 text-xs text-gray-400 max-w-[120px] truncate">${l.url.replace(/^https?:\/\//,'').slice(0,30)}</td>
+      <td class="px-3 py-2.5 font-mono text-sm text-center">${l.clicks}</td>
+      <td class="px-3 py-2.5">${l.is_active?'<span class="badge bg-emerald-500/10 text-emerald-400">A</span>':'<span class="badge bg-red-500/10 text-red-400">I</span>'}
+      ${l.username?`<span class="badge bg-purple-500/10 text-purple-400 ml-1">@${l.username.slice(0,6)}</span>`:''}</td>
+      <td class="px-3 py-2.5"><div class="flex gap-1">
+        <button onclick="showLinkStats('${l.code}')" class="btn-g p-1.5 text-xs">📊</button>
+        <button onclick="showEditLink('${l.code}')" class="btn-g p-1.5 text-xs">✏️</button>
+        <button onclick="downloadQR('${l.code}')" class="btn-g p-1.5 text-xs">📱</button>
+        <button onclick="deleteLink('${l.code}')" class="btn-g hover:text-red-400 p-1.5 text-xs">🗑️</button>
+      </div></td>
+    </tr>`}).join('')
+  const p=document.getElementById('lp')
+  if(d.pages<=1){p.innerHTML='';return}
+  p.innerHTML=`<span>${d.page}/${d.pages}</span>
+  <div class="flex gap-2">${d.page>1?`<button onclick="linkPage=${d.page-1};loadLinks()" class="btn-g text-xs">←</button>`:''}
+  ${d.page<d.pages?`<button onclick="linkPage=${d.page+1};loadLinks()" class="btn-g text-xs">→</button>`:''}</div>`
+}
+
+function showLinkModal(){showModal(`
+  <h2 class="text-base md:text-lg font-semibold text-white mb-3">New Short Link</h2>
+  <div class="space-y-3">
+    <input id="fm-url" type="url" placeholder="https://example.com" class="w-full px-4 py-2.5 rounded-lg text-sm" onchange="fetchTitle(this.value)">
+    <div class="flex gap-1 items-center"><span id="fm-preview" class="text-xs text-gray-500 hidden"></span></div>
+    <div class="flex flex-col sm:flex-row gap-2">
+      <input id="fm-code" type="text" placeholder="Custom code (random kalo kosong)" class="w-full px-4 py-2.5 rounded-lg text-sm font-mono" oninput="debounceCheckSlug(this.value,'fm-code-status')"> <span id="fm-code-status" class="text-xs"></span>
+      <input id="fm-title" type="text" placeholder="Title (auto)" class="w-full px-4 py-2.5 rounded-lg text-sm">
+    </div>
+    <details class="text-sm"><summary class="text-gray-400 cursor-pointer hover:text-white">🔧 UTM Builder</summary>
+      <div class="grid grid-cols-2 gap-2 mt-2">
+        <input id="utm-source" placeholder="utm_source" class="px-3 py-2 rounded-lg text-xs font-mono">
+        <input id="utm-medium" placeholder="utm_medium" class="px-3 py-2 rounded-lg text-xs font-mono">
+        <input id="utm-campaign" placeholder="utm_campaign" class="px-3 py-2 rounded-lg text-xs font-mono">
+        <input id="utm-content" placeholder="utm_content" class="px-3 py-2 rounded-lg text-xs font-mono">
+      </div>
+    </details>
+    <div class="flex flex-col sm:flex-row gap-2">
+      <input id="fm-pw" type="text" placeholder="🔒 Password (opsional)" class="w-full px-4 py-2.5 rounded-lg text-sm">
+      <input id="fm-exp" type="date" class="w-full px-4 py-2.5 rounded-lg text-sm" style="color-scheme:dark">
+    </div>
+    <select id="fm-username" class="w-full px-4 py-2.5 rounded-lg text-sm"><option value="">— No microsite —</option></select>
+  </div>
+  <div class="flex gap-3 mt-4">
+    <button onclick="submitLink()" class="btn-p flex-1">Create</button>
+    <button onclick="closeModal()" class="btn-g">Cancel</button>
+  </div>`)
+  api('/api/microsites').then(d=>{if(d)document.getElementById('fm-username').innerHTML+=d.map(s=>`<option value="${s.username}">@${s.username}</option>`).join('')})
+}
+
+function buildUTM(base){const s=document.getElementById('utm-source').value,m=document.getElementById('utm-medium').value,c=document.getElementById('utm-campaign').value,co=document.getElementById('utm-content').value;if(!s&&!m&&!c)return base;const p=new URLSearchParams();if(s)p.set('utm_source',s);if(m)p.set('utm_medium',m);if(c)p.set('utm_campaign',c);if(co)p.set('utm_content',co);return base+(base.includes('?')?'&':'?')+p.toString()}
+
+async function fetchTitle(url){if(!url)return;const d=await api('/api/fetch-title',{method:'POST',body:JSON.stringify({url})});if(d&&d.title){document.getElementById('fm-title').value=d.title;document.getElementById('fm-title').style.borderColor='#22c55e'}if(d&&d.description){const p=document.getElementById('fm-preview');p.textContent=d.title+' — '+d.description.slice(0,80);p.classList.remove('hidden')}}
+
+async function submitLink(){
+  let url=document.getElementById('fm-url').value.trim()
+  if(!url){toast('URL required!','error');return}
+  url=buildUTM(url)
+  const body={url,title:document.getElementById('fm-title').value.trim()}
+  const code=document.getElementById('fm-code').value.trim();if(code)body.code=code
+  const username=document.getElementById('fm-username').value;if(username)body.username=username
+  const pw=document.getElementById('fm-pw').value;if(pw)body.password=pw
+  const exp=document.getElementById('fm-exp').value;if(exp)body.expires_at=new Date(exp+'T23:59:59').getTime()/1000
+  await api('/api/links',{method:'POST',body:JSON.stringify(body)})
+  toast('✅ Created!');closeModal();loadLinks()
+}
+
+async function showEditLink(code){
+  _editCode=code
+  const d=await api(`/api/links/${code}/stats`);if(!d)return
+  const l=d.link
+  showModal(`
+    <h2 class="text-base font-semibold text-white mb-3">Edit Link</h2>
+    <div class="text-xs text-gray-400 mb-3">${l.clicks} clicks · ${l.url.replace(/^https?:\/\//,'').slice(0,40)}</div>
+    <div class="space-y-3">
+      <div><label class="text-xs text-gray-400 block mb-0.5">Short URL / Slug</label>
+      <input id="fe-code" type="text" value="${l.code}" class="w-full px-4 py-2.5 rounded-lg text-sm font-mono" oninput="previewSlug(this.value,'fe-code-preview');debounceCheckSlug(this.value,'fe-code-status')">
+      <p class="text-xs text-gray-500 mt-0.5">${location.host}/<span id="fe-code-preview">${l.code}</span> <span id="fe-code-status" class="text-xs"></span></p></div>
+      <div><label class="text-xs text-gray-400 block mb-0.5">Destination URL</label>
+      <input id="fe-url" type="url" value="${l.url}" class="w-full px-4 py-2.5 rounded-lg text-sm"></div>
+      <div><label class="text-xs text-gray-400 block mb-0.5">Display Title</label>
+      <input id="fe-title" type="text" value="${l.title}" class="w-full px-4 py-2.5 rounded-lg text-sm"></div>
+      <label class="flex items-center gap-2 text-sm text-gray-300"><input type="checkbox" id="fe-active" ${l.is_active?'checked':''} class="rounded"> Active</label>
+    </div>
+    <div class="flex gap-3 mt-4">
+      <button onclick="submitEditLink()" class="btn-p flex-1">Save</button>
+      <button onclick="closeModal()" class="btn-g">Cancel</button>
+    </div>`)
+}
+
+let _editCode=''
+
+async function submitEditLink(){
+  const code=_editCode
+  const newCode=document.getElementById('fe-code').value.trim()
+  const body={url:document.getElementById('fe-url').value.trim(),title:document.getElementById('fe-title').value.trim(),is_active:document.getElementById('fe-active').checked}
+  if(newCode&&newCode!==code)body.code=newCode
+  if(!body.url){toast('URL required!','error');return}
+  try{
+    const result=await api('/api/links/'+code,{method:'PUT',body:JSON.stringify(body)})
+    toast('✅ Updated!')
+    closeModal()
+    _editCode=result.code
+    // Refresh if slug changed
+    if(result.code!==code)showEditLink(result.code)
+    loadLinks()
+  }catch(e){}
+}
+
+async function deleteLink(code){if(!confirm('Delete?'))return;await api('/api/links/'+code,{method:'DELETE'});toast('🗑️ Deleted');loadLinks()}
+
+function downloadQR(code){const a=document.createElement('a');a.href=location.protocol+'//'+location.host+'/'+code+'/qr';a.download=code+'-qrcode.png';a.click();toast('📱 Downloaded!')}
+
+async function showLinkStats(code){
+  const d=await api(`/api/links/${code}/stats`);if(!d)return
+  const l=d.link
+  let h=`<h2 class="text-base font-semibold text-white mb-1">📊 ${l.title||'/'+l.code}</h2>
+  <div class="text-xs text-gray-400 mb-3 break-all"><a href="${l.url}" target="_blank" class="text-blue-400">${l.url.slice(0,60)}...</a></div>
+  <div class="grid grid-cols-2 gap-3 mb-4">
+    <div class="card rounded-lg p-3 text-center"><div class="text-lg font-bold text-white">${l.clicks}</div><div class="text-xs text-gray-400">Total</div></div>
+    <div class="card rounded-lg p-3 text-center"><div class="text-lg font-bold text-white">${d.daily_clicks.length>0?d.daily_clicks[d.daily_clicks.length-1].count:0}</div><div class="text-xs text-gray-400">Today</div></div>
+  </div>`
+  if(d.daily_clicks.length>0){const max=Math.max(...d.daily_clicks.map(x=>x.count),1);h+=`<div class="mb-4"><h3 class="text-xs font-semibold text-gray-400 uppercase mb-2">Daily (30 days)</h3>`+d.daily_clicks.slice(-14).map(c=>`<div class="flex items-center gap-2 text-xs mb-1"><span class="text-gray-400 w-16 flex-shrink-0">${c.day.slice(5)}</span><div class="flex-1 bg-slate-700 rounded-full h-2 min-w-0"><div class="bg-blue-500 h-full rounded-full" style="width:${(c.count/max*100)||0}%"></div></div><span class="text-white font-mono w-6 text-right flex-shrink-0">${c.count}</span></div>`).join('')+`</div>`}
+  if(d.top_referrers&&d.top_referrers.length){h+=`<div class="mb-4"><h3 class="text-xs font-semibold text-gray-400 uppercase mb-2">Referrers</h3>`+d.top_referrers.slice(0,5).map(r=>`<div class="flex justify-between text-xs py-1"><span class="text-gray-400 truncate">${r.referrer}</span><span class="text-white font-mono">${r.count}</span></div>`).join('')+`</div>`}
+  h+=`<button onclick="closeModal()" class="btn-g w-full mt-3">Close</button>`
+  showModal(h)
+}
+
+// ===== MICROSITES =====
+async function loadMicrosites(){
+  const d=await api('/api/microsites'),g=document.getElementById('msg')
+  if(!d||!d.length){g.innerHTML='<div class="col-span-full text-center py-8 text-gray-500"><div class="text-3xl mb-2">📋</div><p class="text-sm">No microsites</p></div>';return}
+  g.innerHTML=d.map(s=>`
+    <div class="card rounded-xl overflow-hidden hover:border-slate-500 transition cursor-pointer" onclick="showMicrositeDetail('${s.username}')">
+      <div class="h-20 flex items-center justify-center" style="background:${s.bg_color}">
+        <div class="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold" style="background:${s.accent_color}40;color:${s.text_color};border:2px solid ${s.accent_color}">${s.display_name?s.display_name[0].toUpperCase():'?'}</div>
+      </div>
+      <div class="p-3"><h3 class="text-white font-semibold text-sm truncate">${s.display_name}</h3><p class="text-xs text-gray-400">@${s.username}</p>
+      <div class="flex items-center gap-3 text-xs text-gray-400 mt-1"><span>🔗 ${s.link_count}</span><span>👁️ ${s.total_clicks}</span></div></div>
+    </div>`).join('')
+}
+
+async function showMicrositeDetail(username){
+  _msUser=username
+  await renderMicrositeDetail()
+}
+
+let _msUser=''
+
+async function renderMicrositeDetail(){
+  const username=_msUser
+  const s=await api('/api/microsites/'+username);if(!s)return
+  const url=location.protocol+'//'+location.host+'/u/'+s.username
+
+  let h=`<div class="max-h-[75vh] overflow-y-auto -m-1 p-1">`
+  // Header
+  h+=`<div class="flex items-start gap-3 mb-4">
+    <div class="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold flex-shrink-0" style="background:${s.accent_color}30;border:2px solid ${s.accent_color};color:${s.text_color}">${s.display_name[0]}</div>
+    <div class="min-w-0 flex-1">
+      <h2 class="text-base font-semibold text-white">${s.display_name}</h2>
+      <p class="text-xs text-gray-400">@${s.username}</p>
+      ${s.bio?`<p class="text-xs text-gray-500 mt-1">${s.bio}</p>`:''}
+      <a href="${url}" target="_blank" class="text-blue-400 text-xs hover:underline break-all">${url}</a>
+    </div>
+  </div>`
+  // Actions
+  h+=`<div class="flex gap-2 mb-4 flex-wrap">
+    <button onclick="closeModal();setTimeout(()=>editMicrosite('${s.username}'),100)" class="btn-p text-xs">✏️ Edit Bio</button>
+    <a href="${url}" target="_blank" class="btn-g text-xs inline-flex items-center gap-1">🌐 Preview</a>
+    <button onclick="deleteMicrosite('${s.username}')" class="btn-d text-xs">🗑️ Delete</button>
+  </div>`
+
+  // Add Link form
+  h+=`<div class="card rounded-lg p-3 mb-4">
+    <h4 class="text-xs font-semibold text-white mb-2">📎 Tambah Link ke Bio</h4>
+    <div class="flex gap-2 flex-col">
+      <div class="flex gap-2 flex-col sm:flex-row">
+        <input id="ml-url" type="url" placeholder="https://..." class="flex-1 px-3 py-2 rounded-lg text-sm min-w-0" onchange="fetchTitle(this.value)">
+        <input id="ml-title" type="text" placeholder="Nama tampilan" class="flex-1 px-3 py-2 rounded-lg text-sm min-w-0">
+      </div>
+      <div class="flex gap-2">
+        <input id="ml-slug" type="text" placeholder="Custom slug" class="flex-1 px-3 py-2 rounded-lg text-sm font-mono" oninput="debounceCheckSlug(this.value,'ml-slug-status')"> <span id="ml-slug-status" class="text-xs"></span>
+        <button onclick="addLinkToMicrosite('${s.username}')" class="btn-p text-sm whitespace-nowrap">➕ Add</button>
+      </div>
+    </div>
+  </div>`
+
+  // Links list
+  h+=`<h3 class="text-sm font-semibold text-white mb-2">Daftar Link (${s.links.length})</h3>`
+  if(!s.links.length){
+    h+='<p class="text-xs text-gray-500 py-3 text-center card rounded-lg">Belum ada link. Isi URL + Nama di atas, klik Add.</p>'
+  }else{
+    h+='<div class="space-y-1.5">'
+    s.links.forEach((l,i)=>{h+=`<div class="flex items-center justify-between card rounded-lg p-2.5 gap-2">
+      <div class="min-w-0 flex-1">
+        <div class="text-white text-xs font-medium truncate">${i+1}. ${l.title||'Untitled'}</div>
+        <div class="flex items-center gap-2 text-xs">
+          <a href="//${l.short_url}" target="_blank" class="text-blue-400 hover:underline">/${l.code}</a>
+          <span class="text-gray-500">→ ${l.url.replace(/^https?:\/\//,'').slice(0,30)}</span>
+          <span class="text-gray-500">👁️ ${l.clicks}</span>
+        </div>
+      </div>
+      <div class="flex gap-1 flex-shrink-0">
+        <button onclick="editMicrositeLink('${l.code}')" class="text-blue-400 hover:text-blue-300 text-xs p-1.5 rounded hover:bg-slate-700" title="Edit">✏️</button>
+        <button onclick="detachLinkFromBio('${l.code}')" class="text-red-400 hover:text-red-300 text-xs p-1.5 rounded hover:bg-slate-700" title="Hapus dari bio">❌</button>
+      </div>
+    </div>`})
+    h+='</div>'
+  }
+
+  h+=`</div><button onclick="closeModal()" class="btn-g w-full mt-3 text-xs">Tutup</button>`
+  showModal(h)
+}
+
+function showMicrositeModal(s){
+  s=s||{};const has=s.username||false
+  let h=`<h2 class="text-base font-semibold text-white mb-3">${has?'Edit':'New'} Microsite</h2>
+  <div class="space-y-3">
+    <div><label class="text-xs text-gray-400 block mb-0.5">Username</label><input id="ms-user" type="text" value="${s.username||''}" class="w-full px-4 py-2.5 rounded-lg text-sm font-mono" ${has?'readonly':''}></div>
+    <div><label class="text-xs text-gray-400 block mb-0.5">Display Name</label><input id="ms-name" type="text" value="${s.display_name||''}" class="w-full px-4 py-2.5 rounded-lg text-sm"></div>
+    <div><label class="text-xs text-gray-400 block mb-0.5">Bio</label><textarea id="ms-bio" rows="2" class="w-full px-4 py-2.5 rounded-lg text-sm">${s.bio||''}</textarea></div>
+    <div><label class="text-xs text-gray-400 block mb-0.5">Avatar URL</label><input id="ms-avatar" type="text" value="${s.avatar_url||''}" class="w-full px-4 py-2.5 rounded-lg text-sm"></div>
+    <div><label class="text-xs text-gray-400 block mb-0.5">🎨 Themes</label><div id="themes-grid" class="grid grid-cols-5 gap-1.5"></div></div>
+    <div class="grid grid-cols-3 gap-2">
+      <div><label class="text-xs text-gray-400 block mb-0.5">Bg</label><input id="ms-bg" type="color" value="${s.bg_color||'#0f172a'}" class="w-full h-[38px] rounded-lg cursor-pointer"></div>
+      <div><label class="text-xs text-gray-400 block mb-0.5">Text</label><input id="ms-text" type="color" value="${s.text_color||'#e2e8f0'}" class="w-full h-[38px] rounded-lg cursor-pointer"></div>
+      <div><label class="text-xs text-gray-400 block mb-0.5">Accent</label><input id="ms-accent" type="color" value="${s.accent_color||'#3b82f6'}" class="w-full h-[38px] rounded-lg cursor-pointer"></div>
+    </div>
+    <div><label class="text-xs text-gray-400 block mb-0.5">Button Style</label><select id="ms-btn" class="w-full px-4 py-2.5 rounded-lg text-sm"><option value="rounded" ${s.btn_style==='rounded'?'selected':''}>Rounded</option><option value="pill" ${s.btn_style==='pill'?'selected':''}>Pill</option><option value="square" ${s.btn_style==='square'?'selected':''}>Square</option><option value="soft" ${s.btn_style==='soft'?'selected':''}>Soft</option></select></div>
+    <div><label class="text-xs text-gray-400 block mb-0.5">🔗 Social Links</label><div id="social-grid" class="flex flex-wrap gap-1.5"></div><div id="social-inputs" class="space-y-2 mt-2"></div></div>
+  </div>
+  <div class="flex gap-3 mt-4"><button onclick="submitMicrosite()" class="btn-p flex-1">${has?'Update':'Create'}</button><button onclick="closeModal()" class="btn-g">Cancel</button></div>`
+  showModal(h);loadThemes(s);loadSocialPicker(s)
+}
+
+async function loadThemes(s){
+  const g=document.getElementById('themes-grid');const themes=await api('/api/themes');if(!themes)return
+  g.innerHTML=themes.map((t,i)=>`<div class="th-card ${t.bg_color===s.bg_color&&t.accent_color===s.accent_color?'active':''}" onclick="applyTheme(${i})" style="background:${t.bg_color};border:1px solid ${t.accent_color}40;color:${t.text_color}">${t.bg_color==='#ffffff'?'☀️':'🌙'}<br>${t.name}</div>`).join('')
+  window._themes=themes
+}
+function applyTheme(i){const t=window._themes[i];document.getElementById('ms-bg').value=t.bg_color;document.getElementById('ms-text').value=t.text_color;document.getElementById('ms-accent').value=t.accent_color;document.querySelectorAll('.th-card').forEach((c,j)=>{c.classList.toggle('active',j===i)})}
+
+const SOCIAL_PLATFORMS=[{id:'instagram',label:'IG',icon:'📸'},{id:'youtube',label:'YT',icon:'🎬'},{id:'twitter',label:'X',icon:'🐦'},{id:'tiktok',label:'TT',icon:'🎵'},{id:'github',label:'GH',icon:'💻'},{id:'linkedin',label:'LI',icon:'💼'},{id:'facebook',label:'FB',icon:'📘'},{id:'telegram',label:'TG',icon:'✈️'},{id:'whatsapp',label:'WA',icon:'💬'},{id:'website',label:'Web',icon:'🌐'}]
+
+function loadSocialPicker(s){const g=document.getElementById('social-grid'),si=document.getElementById('social-inputs');let existing=[];try{if(s.social_json)existing=JSON.parse(s.social_json)}catch(e){}g.innerHTML=SOCIAL_PLATFORMS.map(p=>{const has=existing.find(e=>e.id===p.id);return`<div class="soc-btn ${has?'active':''}" onclick="toggleSocial('${p.id}')" id="soc-${p.id}">${p.icon} ${p.label}</div>`}).join('');window._socData=existing;renderSocialInputs()}
+function toggleSocial(id){const btn=document.getElementById('soc-'+id);const idx=window._socData.findIndex(s=>s.id===id);if(idx>=0){window._socData.splice(idx,1);btn.classList.remove('active')}else{const p=SOCIAL_PLATFORMS.find(s=>s.id===id);window._socData.push({id,label:p.label,icon:p.icon,url:''});btn.classList.add('active')}renderSocialInputs()}
+function renderSocialInputs(){const si=document.getElementById('social-inputs');si.innerHTML=window._socData.map(s=>`<div class="flex items-center gap-2"><span>${s.icon}</span><input type="url" value="${s.url}" placeholder="https://..." class="flex-1 px-3 py-2 rounded-lg text-xs" onchange="window._socData.find(x=>x.id==='${s.id}').url=this.value"></div>`).join('')}
+
+async function submitMicrosite(){
+  const body={username:document.getElementById('ms-user').value.trim(),display_name:document.getElementById('ms-name').value.trim(),bio:document.getElementById('ms-bio').value.trim(),avatar_url:document.getElementById('ms-avatar').value.trim(),bg_color:document.getElementById('ms-bg').value,text_color:document.getElementById('ms-text').value,accent_color:document.getElementById('ms-accent').value,btn_style:document.getElementById('ms-btn').value,font_family:'system-ui',social_json:JSON.stringify(window._socData.filter(s=>s.url))}
+  if(!body.username){toast('Username required!','error');return}if(!body.display_name)body.display_name=body.username
+  await api('/api/microsites',{method:'POST',body:JSON.stringify(body)});toast('✅ Saved!');closeModal();loadMicrosites()
+}
+function editMicrosite(username){
+  // Fetch full microsite data including links
+  api('/api/microsites/'+username).then(s=>showMicrositeModal(s))
+}
+async function deleteMicrosite(username){if(!confirm('Delete @'+username+'?'))return;await api('/api/microsites/'+username,{method:'DELETE'});toast('🗑️ Deleted');closeModal();loadMicrosites()}
+
+// ===== USERS =====
+async function loadUsers(){
+  try{
+    const data=await api('/api/users')
+    const rows=document.getElementById('users-rows')
+    if(!data||!data.length){rows.innerHTML='<div class="p-6 text-center text-gray-500 text-sm">No users. You\'re the only one.</div>';return}
+    rows.innerHTML=data.map(u=>`
+      <div class="px-4 py-3 flex items-center justify-between hover:bg-slate-700/30 transition">
+        <div>
+          <div class="text-white text-sm font-medium">${u.username}</div>
+          <div class="text-xs text-gray-400">${u.role==='admin'?'👑 Admin':'👤 User'} · ID: ${u.id}</div>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="showUserPasswordModal('${u.username}')" class="btn-g text-xs">🔑 Set Password</button>
+          ${u.role!=='admin'?`<button onclick="deleteUser('${u.username}')" class="btn-g hover:text-red-400 text-xs">🗑️</button>`:''}
+        </div>
+      </div>
+    `).join('')
+  }catch(e){
+    document.getElementById('users-rows').innerHTML='<div class="p-6 text-center text-gray-500 text-sm">Only admin can manage users.</div>'
+  }
+}
+function showUserModal(){showModal(`
+  <h2 class="text-base font-semibold text-white mb-3">Add New User</h2>
+  <div class="space-y-3">
+    <input id="nu-user" type="text" placeholder="Username" class="w-full px-4 py-2.5 rounded-lg text-sm">
+    <input id="nu-pass" type="password" placeholder="Password" class="w-full px-4 py-2.5 rounded-lg text-sm">
+    <select id="nu-role" class="w-full px-4 py-2.5 rounded-lg text-sm">
+      <option value="user">👤 User (can only see own data)</option>
+      <option value="admin">👑 Admin (can see everything)</option>
+    </select>
+  </div>
+  <div class="flex gap-3 mt-4">
+    <button onclick="submitUser()" class="btn-p flex-1">Add User</button>
+    <button onclick="closeModal()" class="btn-g">Cancel</button>
+  </div>`)
+}
+async function submitUser(){const u=document.getElementById('nu-user').value.trim(),p=document.getElementById('nu-pass').value,r=document.getElementById('nu-role').value;if(!u||!p){toast('All fields required','error');return}await api('/api/users',{method:'POST',body:JSON.stringify({username:u,password:p,role:r})});toast('✅ User created!');closeModal();loadUsers()}
+async function deleteUser(u){if(!confirm('Delete user @'+u+'?'))return;await api('/api/users/'+u,{method:'DELETE'});toast('🗑️ Deleted');loadUsers()}
+function showUserPasswordModal(u){showModal(`<h2 class="text-base font-semibold text-white mb-3">🔑 Set Password for @${u}</h2><div class="space-y-3"><input id="up-pass" type="password" placeholder="New password" class="w-full px-4 py-2.5 rounded-lg text-sm"></div><div class="flex gap-3 mt-4"><button onclick="submitUserPassword('${u}')" class="btn-p flex-1">Update</button><button onclick="closeModal()" class="btn-g">Cancel</button></div>`)}
+async function submitUserPassword(u){const p=document.getElementById('up-pass').value;if(!p){toast('Password required','error');return}await api('/api/users/'+u+'/password',{method:'PUT',body:JSON.stringify({password:p})});toast('✅ Password updated!');closeModal();loadUsers()}
+
+// ===== ADD LINK TO MICROSITE =====
+async function addLinkToMicrosite(username){
+  const url=document.getElementById('ml-url').value.trim()
+  const title=document.getElementById('ml-title').value.trim()
+  const slug=document.getElementById('ml-slug').value.trim()
+  if(!url){toast('URL harus diisi!','error');return}
+  const body={url,title:title||undefined,username}
+  if(slug)body.code=slug
+  await api('/api/links',{method:'POST',body:JSON.stringify(body)})
+  toast('✅ Link ditambahkan ke @'+username)
+  document.getElementById('ml-url').value=''
+  document.getElementById('ml-title').value=''
+  document.getElementById('ml-slug').value=''
+  renderMicrositeDetail()
+}
+
+// ===== EDIT LINK FROM MICROSITE =====
+function editLinkFromMicrosite(code){
+  closeModal()
+  showEditLink(code)
+}
+
+function editMicrositeLink(code){
+  showEditLink(code)
+}
+
+// ===== DETACH LINK FROM BIO =====
+async function detachLinkFromBio(code){
+  if(!confirm('Hapus link ini dari bio?'))return
+  await api('/api/links/'+code+'/detach',{method:'POST'})
+  toast('🗑️ Dihapus dari bio')
+  renderMicrositeDetail()
+}
+
+// ===== CHANGE MY PASSWORD =====
+async function changeMyPassword(){
+  const old=document.getElementById('my-oldpw').value
+  const pw=document.getElementById('my-newpw').value
+  if(!old||!pw){toast('Semua field harus diisi!','error');return}
+  if(pw.length<4){toast('Min 4 karakter','error');return}
+  await api('/api/settings/password',{method:'PUT',body:JSON.stringify({old_password:old,new_password:pw})})
+  toast('✅ Password diganti!')
+  document.getElementById('my-oldpw').value=''
+  document.getElementById('my-newpw').value=''
+}
+
+// ===== INIT =====
+loadDashboard()
+</script>
+</body>
+</html>

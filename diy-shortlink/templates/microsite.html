@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>{{.DisplayName}} (@{{.Username}})</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background: {{.BgColor}};
+      color: {{.TextColor}};
+      font-family: {{.FontFamily}}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh; min-height: 100dvh;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .avatar-img {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid {{.AccentColor}};
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .avatar-placeholder {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center; justify-content: center;
+      font-size: 2rem; font-weight: 700;
+      border: 3px solid {{.AccentColor}};
+      background: {{.AccentColor}}20;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .btn-link {
+      display: block;
+      width: 100%;
+      padding: {{if eq .BtnStyle "pill"}}0.85rem 1.5rem{{else}}0.75rem 1.5rem{{end}};
+      text-align: center;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      color: white !important;
+      background: {{.AccentColor}};
+      border: none;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      {{if eq .BtnStyle "rounded"}}border-radius: 0.75rem;{{end}}
+      {{if eq .BtnStyle "pill"}}border-radius: 999px;{{end}}
+      {{if eq .BtnStyle "square"}}border-radius: 0;{{end}}
+      {{if eq .BtnStyle "soft"}}border-radius: 0.5rem;{{end}}
+    }
+    .btn-link:hover { transform: translateY(-2px); box-shadow: 0 8px 25px {{.AccentColor}}40; }
+    .btn-link:active { transform: translateY(0); }
+    .social-link {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      transition: all 0.2s;
+      font-size: 1.2rem;
+      background: {{.AccentColor}}15;
+      color: {{.TextColor}};
+      text-decoration: none;
+    }
+    .social-link:hover { background: {{.AccentColor}}30; transform: scale(1.1); }
+    .footer-text { color: {{.TextColor}}; opacity: 0.25; font-size: 0.7rem; }
+  </style>
+</head>
+<body>
+  <div class="max-w-sm mx-auto px-5 py-10 text-center">
+    <!-- Avatar -->
+    <div class="mb-4 flex justify-center">
+      {{if .AvatarURL}}
+        <img src="{{.AvatarURL}}" alt="{{.DisplayName}}" class="avatar-img" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="avatar-placeholder" style="display:none">{{slice .DisplayName 0 1}}</div>
+      {{else}}
+        <div class="avatar-placeholder">{{slice .DisplayName 0 1}}</div>
+      {{end}}
+    </div>
+
+    <!-- Info -->
+    <h1 class="text-xl font-bold mb-1">{{.DisplayName}}</h1>
+    <p class="text-sm opacity-60 mb-1">@{{.Username}}</p>
+    {{if .Bio}}
+      <p class="text-sm opacity-70 mb-5 max-w-xs mx-auto leading-relaxed">{{.Bio}}</p>
+    {{end}}
+
+    <!-- Social Links -->
+    {{if .SocialJSON}}
+      <div class="flex justify-center gap-3 mb-5 flex-wrap">
+        {{range parseJSON .SocialJSON}}
+          <a href="{{.url}}" target="_blank" rel="noopener" style="text-decoration:none;color:{{$.TextColor}}">
+            <div class="social-link" style="margin:0 auto">{{.icon}}</div>
+            <div style="font-size:0.6rem;margin-top:0.25rem;opacity:0.7">{{.label}}</div>
+          </a>
+        {{end}}
+      </div>
+    {{end}}
+
+    <!-- Links -->
+    <div class="space-y-2.5">
+      {{range .Links}}
+        <a href="/{{.Code}}" target="_blank" rel="noopener" class="btn-link">
+          {{if .Title}}{{.Title}}{{else}}{{.URL}}{{end}}
+        </a>
+      {{end}}
+    </div>
+
+    <!-- Footer -->
+    <p class="mt-10 footer-text">powered by <strong>Shortlink</strong></p>
+  </div>
+</body>
+</html>

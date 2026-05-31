@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shortlink Pro — Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0f172a; font-family: system-ui, -apple-system, sans-serif; }
+    .login-card { background: #1e293b; border: 1px solid #334155; }
+    input { background: #0f172a !important; color: #e2e8f0 !important; border: 1px solid #475569 !important; }
+    input:focus { border-color: #3b82f6 !important; box-shadow: 0 0 0 2px rgba(59,130,246,0.3) !important; }
+    .btn-primary { background: #2563eb; transition: all 0.2s; }
+    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+  <div class="login-card rounded-2xl p-8 w-full max-w-sm">
+    <div class="text-center mb-8">
+      <div class="text-4xl mb-3">🔗</div>
+      <h1 class="text-2xl font-bold text-white">Shortlink Pro</h1>
+      <p class="text-gray-400 text-sm mt-1">Sign in to your dashboard</p>
+    </div>
+
+    {{if .Error}}
+      <div class="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg p-3 mb-4">{{.Error}}</div>
+    {{end}}
+
+    <form method="POST" action="/login" class="space-y-4">
+      <div>
+        <label class="text-sm text-gray-400 block mb-1.5">Username</label>
+        <input type="text" name="username" required autocomplete="username"
+               class="w-full px-4 py-2.5 rounded-lg text-sm outline-none"
+               placeholder="admin" autofocus>
+      </div>
+      <div>
+        <label class="text-sm text-gray-400 block mb-1.5">Password</label>
+        <input type="password" name="password" required autocomplete="current-password"
+               class="w-full px-4 py-2.5 rounded-lg text-sm outline-none"
+               placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn-primary w-full text-white py-2.5 rounded-lg font-medium text-sm">
+        Sign In
+      </button>
+    </form>
+  </div>
+</body>
+</html>

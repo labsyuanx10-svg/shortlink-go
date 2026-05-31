@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  shlink:
+    image: shlinkio/shlink:stable
+    container_name: shlink
+    hostname: shlink
+    restart: unless-stopped
+    environment:
+      - DEFAULT_DOMAIN=localhost:8080
+      - IS_HTTPS_ENABLED=false
+      - GEOLOCATION_DB_COUNTRY_DIR=/geolite2/GeoLite2-Country.mmdb
+    volumes:
+      - shlink_data:/data
+      - geolite2_data:/geolite2
+    ports:
+      - "8080:8080"
+    networks:
+      - shlink_net
+
+  shlink-web-client:
+    image: shlinkio/shlink-web-client:stable
+    container_name: shlink-web-client
+    hostname: shlink-web-client
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    networks:
+      - shlink_net
+    depends_on:
+      - shlink
+
+volumes:
+  shlink_data:
+  geolite2_data:
+
+networks:
+  shlink_net:
+    driver: bridge

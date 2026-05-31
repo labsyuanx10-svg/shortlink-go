@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shortlink Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { colors: { dark: { 900: '#0f172a', 800: '#1e293b', 700: '#334155', 600: '#475569' } } } }
+    }
+  </script>
+  <style>
+    body { background: #0f172a; color: #e2e8f0; }
+    .card { background: #1e293b; border: 1px solid #334155; }
+    input, textarea, select { background: #0f172a !important; color: #e2e8f0 !important; border: 1px solid #475569 !important; }
+    input:focus, textarea:focus { border-color: #3b82f6 !important; outline: none !important; box-shadow: 0 0 0 2px rgba(59,130,246,0.3) !important; }
+    .btn-primary { background: #2563eb; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-danger { background: #dc2626; }
+    .btn-danger:hover { background: #b91c1c; }
+    .tab-active { border-bottom: 2px solid #3b82f6; color: #60a5fa; }
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.75rem 1.5rem; border-radius: 0.5rem; z-index: 50; animation: slideUp 0.3s ease; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(1rem); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-bold text-white">🔗 Shortlink</h1>
+      <p class="text-gray-400 mt-1">Custom short link + <span class="text-purple-400">microsite</span> manager</p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-6 border-b border-slate-700 mb-6">
+      <button onclick="switchTab('links')" id="tab-links" class="tab-active pb-3 px-1 text-sm font-medium transition">🔗 Links</button>
+      <button onclick="switchTab('microsites')" id="tab-microsites" class="pb-3 px-1 text-sm font-medium text-gray-400 hover:text-white transition">📋 Microsites</button>
+    </div>
+
+    <!-- ========== LINKS TAB ========== -->
+    <div id="tab-content-links">
+      <div class="card rounded-xl p-6 mb-8">
+        <h2 class="text-lg font-semibold text-white mb-4">Buat Short Link</h2>
+        <div class="space-y-3">
+          <input id="input-url" type="url" placeholder="https://example.com/long-url" class="w-full px-4 py-2.5 rounded-lg text-sm">
+          <div class="flex gap-3 flex-wrap">
+            <input id="input-code" type="text" placeholder="Kode (random kalo kosong)" class="flex-1 min-w-[150px] px-4 py-2.5 rounded-lg text-sm font-mono">
+            <input id="input-title" type="text" placeholder="Judul" class="flex-1 min-w-[150px] px-4 py-2.5 rounded-lg text-sm">
+            <select id="input-username" class="px-4 py-2.5 rounded-lg text-sm min-w-[130px]">
+              <option value="">— No microsite —</option>
+            </select>
+          </div>
+          <button onclick="createLink()" class="btn-primary text-white px-6 py-2.5 rounded-lg font-medium text-sm transition">+ Tambah Link</button>
+        </div>
+      </div>
+
+      <div class="card rounded-xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-white">Daftar Link</h2>
+          <span id="link-count" class="text-sm text-gray-400">0 link</span>
+        </div>
+        <div id="link-list" class="divide-y divide-slate-700">
+          <div class="p-6 text-center text-gray-500 text-sm">Belum ada link.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== MICROSITES TAB ========== -->
+    <div id="tab-content-microsites" class="hidden">
+      <!-- Form -->
+      <div class="card rounded-xl p-6 mb-8">
+        <h2 class="text-lg font-semibold text-white mb-4">Buat / Edit Microsite</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input id="ms-username" type="text" placeholder="Username" class="w-full px-4 py-2.5 rounded-lg text-sm font-mono">
+          <input id="ms-display-name" type="text" placeholder="Display Name" class="w-full px-4 py-2.5 rounded-lg text-sm">
+          <div class="md:col-span-2">
+            <textarea id="ms-bio" rows="2" placeholder="Bio (opsional)" class="w-full px-4 py-2.5 rounded-lg text-sm"></textarea>
+          </div>
+          <input id="ms-avatar" type="text" placeholder="Avatar URL (opsional)" class="w-full px-4 py-2.5 rounded-lg text-sm">
+          <div class="flex gap-2">
+            <div class="flex-1">
+              <label class="text-xs text-gray-400 block mb-1">Background</label>
+              <input id="ms-bg" type="color" value="#0f172a" class="w-full h-[42px] rounded-lg cursor-pointer">
+            </div>
+            <div class="flex-1">
+              <label class="text-xs text-gray-400 block mb-1">Text</label>
+              <input id="ms-text" type="color" value="#e2e8f0" class="w-full h-[42px] rounded-lg cursor-pointer">
+            </div>
+            <div class="flex-1">
+              <label class="text-xs text-gray-400 block mb-1">Accent</label>
+              <input id="ms-accent" type="color" value="#3b82f6" class="w-full h-[42px] rounded-lg cursor-pointer">
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-4">
+          <button onclick="saveMicrosite()" class="btn-primary text-white px-6 py-2.5 rounded-lg font-medium text-sm transition">💾 Simpan</button>
+          <button onclick="clearMicrositeForm()" class="text-gray-400 hover:text-white px-4 py-2.5 text-sm transition">Bersihkan</button>
+        </div>
+      </div>
+
+      <!-- List -->
+      <div class="card rounded-xl overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between">
+          <h2 class="text-lg font-semibold text-white">Daftar Microsite</h2>
+          <span id="ms-count" class="text-sm text-gray-400">0</span>
+        </div>
+        <div id="ms-list" class="divide-y divide-slate-700">
+          <div class="p-6 text-center text-gray-500 text-sm">Belum ada microsite.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    const API_KEY = '***';
+
+    function toast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      el.className = `toast ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'} text-white`;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 3000);
+    }
+
+    function copy(text) {
+      navigator.clipboard.writeText(text);
+      toast('Copied! 📋');
+    }
+
+    async function api(path, opts = {}) {
+      opts.headers = { ...opts.headers, 'X-API-Key': API_KEY, 'Content-Type': 'application/json' };
+      if (opts.method === 'DELETE') { await fetch(path, opts); return null; }
+      const res = await fetch(path, opts);
+      if (!res.ok) { const e = await res.text(); throw new Error(e); }
+      return res.json();
+    }
+
+    // ===== TABS =====
+    function switchTab(tab) {
+      document.querySelectorAll('[id^="tab-"]').forEach(el => el.classList.remove('hidden'));
+      document.querySelectorAll('[id^="tab-content-"]').forEach(el => el.classList.add('hidden'));
+      document.getElementById('tab-content-' + tab).classList.remove('hidden');
+      document.querySelectorAll('#tab-' + tab + ', #tab-' + tab.replace('content-','')).forEach(el => {
+        document.querySelectorAll('.tab-active').forEach(t => t.classList.remove('tab-active'));
+        el.classList.add('tab-active');
+      });
+      if (tab === 'microsites') loadMicrosites();
+      document.getElementById('input-username').disabled = (tab === 'microsites');
+    }
+
+    // ===== LINKS =====
+    async function createLink() {
+      const url = document.getElementById('input-url').value.trim();
+      if (!url) { toast('URL harus diisi!', 'error'); return; }
+      const body = { url, title: document.getElementById('input-title').value.trim() };
+      const code = document.getElementById('input-code').value.trim();
+      if (code) body.code = code;
+      const username = document.getElementById('input-username').value;
+      if (username) body.username = username;
+
+      try {
+        await api('/api/links', { method: 'POST', body: JSON.stringify(body) });
+        document.getElementById('input-url').value = '';
+        document.getElementById('input-code').value = '';
+        document.getElementById('input-title').value = '';
+        toast('✅ Link dibuat');
+        loadLinks();
+      } catch (e) { toast('Gagal: ' + e.message, 'error'); }
+    }
+
+    async function deleteLink(code) {
+      if (!confirm('Hapus link ini?')) return;
+      await api('/api/links/' + code, { method: 'DELETE' });
+      toast('🗑️ Dihapus');
+      loadLinks();
+    }
+
+    async function loadLinks() {
+      const data = await api('/api/links');
+      const container = document.getElementById('link-list');
+      document.getElementById('link-count').textContent = (data?.length || 0) + ' link';
+      if (!data || !data.length) {
+        container.innerHTML = '<div class="p-6 text-center text-gray-500 text-sm">Belum ada link.</div>';
+        return;
+      }
+      container.innerHTML = data.map(l => {
+        const fullShort = window.location.protocol + '//' + l.short_url;
+        return `<div class="px-6 py-4 hover:bg-slate-700/50 transition">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1 flex-wrap">
+                <a href="${fullShort}" target="_blank" class="text-blue-400 font-medium text-sm hover:underline truncate">${fullShort}</a>
+                <button onclick="copy('${fullShort}')" class="text-gray-500 hover:text-gray-300 text-xs px-1.5 py-0.5 rounded border border-slate-600">copy</button>
+                <span class="text-gray-500 text-xs">👁️ ${l.clicks}</span>
+                ${l.username ? `<span class="text-purple-400 text-xs">@${l.username}</span>` : ''}
+              </div>
+              ${l.title ? `<p class="text-gray-400 text-sm truncate">${l.title}</p>` : ''}
+              <p class="text-gray-500 text-xs truncate mt-0.5">→ ${l.url}</p>
+            </div>
+            <div class="flex gap-1 flex-shrink-0">
+              <a href="/${l.code}/qr" target="_blank" class="text-gray-500 hover:text-gray-300 p-1.5 rounded hover:bg-slate-600 text-xs">📱</a>
+              <button onclick="deleteLink('${l.code}')" class="text-gray-500 hover:text-red-400 p-1.5 rounded hover:bg-slate-600 text-xs">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ===== MICROSITES =====
+    async function saveMicrosite() {
+      const username = document.getElementById('ms-username').value.trim();
+      if (!username) { toast('Username harus diisi!', 'error'); return; }
+      const body = {
+        username,
+        display_name: document.getElementById('ms-display-name').value.trim() || username,
+        bio: document.getElementById('ms-bio').value.trim(),
+        avatar_url: document.getElementById('ms-avatar').value.trim(),
+        bg_color: document.getElementById('ms-bg').value,
+        text_color: document.getElementById('ms-text').value,
+        accent_color: document.getElementById('ms-accent').value
+      };
+      try {
+        await api('/api/microsites', { method: 'POST', body: JSON.stringify(body) });
+        toast('✅ Microsite saved!');
+        loadMicrosites();
+        loadUserSelect();
+      } catch (e) { toast('Gagal: ' + e.message, 'error'); }
+    }
+
+    async function loadMicrosites() {
+      const data = await api('/api/microsites');
+      document.getElementById('ms-count').textContent = (data?.length || 0);
+      const container = document.getElementById('ms-list');
+      if (!data || !data.length) {
+        container.innerHTML = '<div class="p-6 text-center text-gray-500 text-sm">Belum ada microsite.</div>';
+        return;
+      }
+      container.innerHTML = data.map(s => {
+        const url = window.location.protocol + '//' + window.location.host + '/u/' + s.username;
+        return `<div class="px-6 py-4 hover:bg-slate-700/50 transition">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-white font-medium text-sm">${s.display_name}</span>
+                <span class="text-purple-400 text-xs">@${s.username}</span>
+              </div>
+              ${s.bio ? `<p class="text-gray-400 text-xs truncate">${s.bio}</p>` : ''}
+              <a href="${url}" target="_blank" class="text-blue-400 text-xs hover:underline">${url}</a>
+            </div>
+            <div class="flex gap-1 flex-shrink-0">
+              <button onclick="editMicrosite('${s.username}')" class="text-gray-500 hover:text-blue-400 p-1.5 rounded hover:bg-slate-600 text-xs">✏️</button>
+              <button onclick="deleteMicrosite('${s.username}')" class="text-gray-500 hover:text-red-400 p-1.5 rounded hover:bg-slate-600 text-xs">🗑️</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    async function editMicrosite(username) {
+      const s = await api('/api/microsites/' + username);
+      document.getElementById('ms-username').value = s.username;
+      document.getElementById('ms-display-name').value = s.display_name;
+      document.getElementById('ms-bio').value = s.bio;
+      document.getElementById('ms-avatar').value = s.avatar_url;
+      document.getElementById('ms-bg').value = s.bg_color;
+      document.getElementById('ms-text').value = s.text_color;
+      document.getElementById('ms-accent').value = s.accent_color;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast('✏️ Edit lalu simpan');
+    }
+
+    function clearMicrositeForm() {
+      ['ms-username','ms-display-name','ms-bio','ms-avatar'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('ms-bg').value = '#0f172a';
+      document.getElementById('ms-text').value = '#e2e8f0';
+      document.getElementById('ms-accent').value = '#3b82f6';
+    }
+
+    async function deleteMicrosite(username) {
+      if (!confirm('Hapus microsite @' + username + '? Semua link-nya juga kehapus.')) return;
+      await api('/api/microsites/' + username, { method: 'DELETE' });
+      toast('🗑️ Microsite dihapus');
+      loadMicrosites();
+      loadUserSelect();
+    }
+
+    async function loadUserSelect() {
+      const data = await api('/api/microsites');
+      const sel = document.getElementById('input-username');
+      sel.innerHTML = '<option value="">— No microsite —</option>';
+      if (data) data.forEach(s => {
+        sel.innerHTML += `<option value="${s.username}">@${s.username}</option>`;
+      });
+    }
+
+    // Init
+    loadLinks();
+    loadUserSelect();
+  </script>
+</body>
+</html>
